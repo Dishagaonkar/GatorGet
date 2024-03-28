@@ -1,0 +1,45 @@
+void setup(){
+
+}
+
+void draw() {
+
+}
+
+class Player{
+  
+  Player(){ //constrctuor 
+  
+  
+  }
+  
+  
+  
+  void movePlayer(){
+  
+  }
+  
+  void numLives(){
+  
+  
+  }
+  
+  void display(){
+  
+  }
+  
+  
+
+
+}
+
+class Falling{
+  
+  Falling(){
+  
+  
+  }
+
+
+
+}
