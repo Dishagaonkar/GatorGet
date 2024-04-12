@@ -1,4 +1,5 @@
 import java.util.Vector;
+import processing.sound.*;
 
 Player p1;
 Vector<Food> meats = new Vector<Food>();
@@ -7,6 +8,7 @@ boolean gameOver = false;
 boolean instructionScreen = true;
 
 PImage background, gator, meatImg, bang;
+SoundFile bgMusic, nomSound;
 
 void setup() {
   size(400, 400);
@@ -15,6 +17,11 @@ void setup() {
   gator = loadImage("gator.png");
   meatImg = loadImage("meat.png");
   bang = loadImage("bang.png");
+  
+  bgMusic = new SoundFile(this, "game_score.mp3");
+  nomSound = new SoundFile(this, "nom_nom_sound.mp3");
+  bgMusic.loop();
+  bgMusic.amp(.05);
 }
 
 void keyPressed() {
@@ -55,11 +62,13 @@ void draw() {
         if (m.checkCollision(p1)) {
           score++; // Increment score if gator catches meat
           meats.remove(i); // Remove meat if caught by gator
+          nomSound.play();
         } else if (m.isOffscreen()) {
           meats.remove(i); // Remove meat if it goes offscreen
           p1.decrementLives(); // Decrement lives if meat falls offscreen
           if (p1.getNumLives() == 0) {
             gameOver = true; // End game if numLives reaches zero
+            bgMusic.stop(); // Stop backgroyund music
           }
         }
       }
