@@ -10,6 +10,14 @@ boolean instructionScreen = true;
 PImage background, gator, meatImg, bang;
 SoundFile bgMusic, nomSound;
 
+
+/*
+Setup Function:
+- Set up the size of the canvas
+- Load images and sounds files 
+- Create a new player object
+*/
+
 void setup() {
   size(400, 400);
   p1 = new Player(3);
@@ -24,12 +32,21 @@ void setup() {
   bgMusic.amp(.05);
 }
 
+/*
+Key Pressed Function:
+- If the instruction screen is displayed, pressing any key will start the game
+*/
+
 void keyPressed() {
   if (instructionScreen) {
     instructionScreen = false;
   }
 }
 
+/*
+Display Instructions Function:
+- Displays game play instructions on the screen
+*/
 
 void displayInstructions() {
   background(255);
@@ -43,6 +60,12 @@ void displayInstructions() {
   text("- Avoid letting meats fall off the \nbottom of the screen", width / 2, height / 2 + 60);
   text("- Press any key to begin", width / 2, height / 2 + 110);
 }
+
+/*
+Draw Function:
+- The draw function displays the game, player, and score on the screen 
+- Tracks the number of lives the player has left, if the player has no lives left, the game ends
+*/
 
 void draw() {
   if (instructionScreen) {
@@ -85,6 +108,16 @@ void draw() {
     }
   }
 }
+
+/*
+Player Class:
+- The player class contains the player's number of lives and x position
+- Move Player Function: Moves the player left and right using the arrow keys
+- Num Lives Function: Displays the player's score and number of lives on the screen
+- Get Num Lives Function: Returns the number of lives the player has left
+- Decrement Lives Function: Decrements the number of lives the player has left
+- Display Function: Displays the player on the screen
+*/
 
 class Player {
   int numLives;
@@ -131,6 +164,15 @@ class Player {
     image(gator, xPos, height - 100, 100, 100);
   }
 }
+
+/*
+Food Class:
+- The food class contains the x and y position of the meat
+- Display Function: Displays the meat on the screen
+- Update Function: Updates the position of the meat
+- Check Collision Function: Checks if the meat has collided with the player
+- Is Offscreen Function: Checks if the meat has gone offscreen
+*/
 
 class Food {
   float x;
