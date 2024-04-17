@@ -9,7 +9,10 @@ boolean instructionScreen = true;
 
 PImage background, gator, meatImg, bang;
 SoundFile bgMusic, nomSound;
-Button startButton, quitButton;
+Button startButton, quitButton, easyButton, notEasyButton;
+boolean gameStarted = false;
+boolean startGame = false;
+boolean easyMode = false;
 
 
 /*
@@ -17,6 +20,7 @@ Setup Function:
 - Set up the size of the canvas
 - Load images and sounds files 
 - Create a new player object
+- Sets difficulty level with buttons
 */
 
 void setup() {
@@ -32,8 +36,10 @@ void setup() {
   bgMusic.loop();
   bgMusic.amp(.05);
 
-  startButton = new Button(width/2, height/2 + 100, 100, 30, "Start");
-  quitButton = new Button(width/2, height/2 + 150, 100, 30, "End");
+  startButton = new Button(width/2, height/2 + 100, 100, 30, "Start", color(0, 0, 255));
+  quitButton = new Button(width/2, height/2 + 150, 100, 30, "End", color(255, 0, 0));
+  easyButton = new Button(width/2, height/2 + 70, 80, 30, "Easy", color(0, 0, 255));
+  notEasyButton = new Button(width/2, height/2 + 120, 80, 30, "Not Easy", color(255, 0, 0));
 }
 
 /*
@@ -44,14 +50,31 @@ Mouse Pressed Function:
 void mousePressed() {
   if (instructionScreen) {
     if (startButton.clicked()) {
+      println("Start button clicked");
       instructionScreen = false;
+      gameStarted = true; 
+    }
+    if (quitButton.clicked()) {
+      exit();
+    }
+  } else if (gameStarted) { 
+    if (easyButton.clicked()) {
+      println("Easy mode selected");
+      startGame = true;
+      easyMode = true;
+    }
+    if (notEasyButton.clicked()) {
+      println("Not Easy mode selected");
+      startGame = true;
+      easyMode = false;
     }
   } else {
-    if (quitButton.clicked()) {
+    if (gameOver) {
       exit();
     }
   }
 }
+
 
 /*
 Display Instructions Function:
@@ -65,11 +88,21 @@ void displayInstructions() {
   textSize(20);
   fill(255);
   text("Instructions:", width / 2, height / 2 - 75);
-  text("- Use arrow keys to move the gator left and right", width / 2, height / 2 - 40);
-  text("- Catch the falling meats to increase your score", width / 2, height / 2 - 15);
-  text("- Avoid letting meats fall off the \nbottom of the screen", width / 2, height / 2 + 10);
-  startButton.display();
-  quitButton.display();
+  
+
+  println("boolean variable: " + gameStarted + " " + startGame + " " + easyMode);
+  if (instructionScreen) {
+    text("- Use arrow keys to move the gator left and right", width / 2, height / 2 - 40);
+    text("- Catch the falling meats to increase your score", width / 2, height / 2 - 15);
+    text("- Avoid letting meats fall off the \nbottom of the screen", width / 2, height / 2 + 10);
+    startButton.display();
+    quitButton.display();
+  }else if (gameStarted && !startGame) {
+    println("In game started, instructions screen");
+    text("Select a difficulty level:", width / 2, height / 2 - 40);
+    easyButton.display();
+    notEasyButton.display();
+  }
 }
 
 /*
@@ -79,9 +112,9 @@ Draw Function:
 */
 
 void draw() {
-  if (instructionScreen) {
+  if (instructionScreen || (gameStarted && !startGame)) {
     displayInstructions();
-  } else {
+  } else if (gameStarted && startGame) {
     background(255);
     image(background, 0, 0, 400, 400);
     p1.display();
@@ -110,8 +143,7 @@ void draw() {
       if (frameCount % 50 == 0) { // Generate new meats at top of screen every 60 frames
         meats.add(new Food());
       }
-    } 
-    else { // Game Ends
+    } else { // Game Ends
       fill(255, 0, 0);
       textSize(40);
       textAlign(CENTER);
@@ -122,7 +154,7 @@ void draw() {
 
 /*
 Button Class:
-- The button class contains the x, y, width, height, and label of the button
+- The button class contains the x and y position, width, height, label, and color of the button.
 - Display Function: Displays the button on the screen
 - Clicked Function: Checks if the button has been clicked
 */
@@ -130,18 +162,20 @@ Button Class:
 class Button {
   float x, y, w, h;
   String label;
+  color c;
 
-  Button(float x, float y, float w, float h, String label) {
+  Button(float x, float y, float w, float h, String label, color c) {
     this.x = x;
     this.y = y;
     this.w = w;
     this.h = h;
     this.label = label;
+    this.c = c;
   }
 
   void display() {
     rectMode(CENTER);
-    fill(0);
+    fill(c);
     rect(x, y, w, h);
     textAlign(CENTER, CENTER);
     fill(255);
