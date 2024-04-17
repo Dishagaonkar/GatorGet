@@ -9,6 +9,7 @@ boolean instructionScreen = true;
 
 PImage background, gator, meatImg, bang;
 SoundFile bgMusic, nomSound;
+Button startButton, quitButton;
 
 
 /*
@@ -30,16 +31,25 @@ void setup() {
   nomSound = new SoundFile(this, "nom_nom_sound.mp3");
   bgMusic.loop();
   bgMusic.amp(.05);
+
+  startButton = new Button(width/2, height/2 + 100, 100, 30, "Start");
+  quitButton = new Button(width/2, height/2 + 150, 100, 30, "End");
 }
 
 /*
-Key Pressed Function:
-- If the instruction screen is displayed, pressing any key will start the game
+Mouse Pressed Function:
+- If the instructions are displayed, player can choose to "start" or "quit" the game. 
 */
 
-void keyPressed() {
+void mousePressed() {
   if (instructionScreen) {
-    instructionScreen = false;
+    if (startButton.clicked()) {
+      instructionScreen = false;
+    }
+  } else {
+    if (quitButton.clicked()) {
+      exit();
+    }
   }
 }
 
@@ -54,11 +64,12 @@ void displayInstructions() {
   textAlign(CENTER);
   textSize(20);
   fill(255);
-  text("Instructions:", width / 2, height / 2 - 50);
-  text("- Use arrow keys to move the gator left and right", width / 2, height / 2);
-  text("- Catch the falling meats to increase your score", width / 2, height / 2 + 30);
-  text("- Avoid letting meats fall off the \nbottom of the screen", width / 2, height / 2 + 60);
-  text("- Press any key to begin", width / 2, height / 2 + 110);
+  text("Instructions:", width / 2, height / 2 - 75);
+  text("- Use arrow keys to move the gator left and right", width / 2, height / 2 - 40);
+  text("- Catch the falling meats to increase your score", width / 2, height / 2 - 15);
+  text("- Avoid letting meats fall off the \nbottom of the screen", width / 2, height / 2 + 10);
+  startButton.display();
+  quitButton.display();
 }
 
 /*
@@ -108,6 +119,40 @@ void draw() {
     }
   }
 }
+
+/*
+Button Class:
+- The button class contains the x, y, width, height, and label of the button
+- Display Function: Displays the button on the screen
+- Clicked Function: Checks if the button has been clicked
+*/
+
+class Button {
+  float x, y, w, h;
+  String label;
+
+  Button(float x, float y, float w, float h, String label) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    this.label = label;
+  }
+
+  void display() {
+    rectMode(CENTER);
+    fill(0);
+    rect(x, y, w, h);
+    textAlign(CENTER, CENTER);
+    fill(255);
+    text(label, x, y);
+  }
+
+  boolean clicked() {
+    return mouseX > x - w/2 && mouseX < x + w/2 && mouseY > y - h/2 && mouseY < y + h/2;
+  }
+}
+
 
 /*
 Player Class:
