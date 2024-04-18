@@ -7,8 +7,16 @@ int score = 0;
 boolean gameOver = false;
 boolean instructionScreen = true;
 
-PImage background, gator, meatImg, bang;
+PImage background, gator, meatImg, bang, powerUp, powerDown;
 SoundFile bgMusic, nomSound;
+Button startButton, quitButton, easyButton, notEasyButton;
+boolean gameStarted = false;
+boolean startGame = false;
+boolean easyMode = false;
+
+int lastPowerSpawnTime = 0;
+int powerInterval = 10000;
+boolean spawnPowerUp = true;
 
 
 /*
@@ -16,6 +24,7 @@ Setup Function:
 - Set up the size of the canvas
 - Load images and sounds files 
 - Create a new player object
+- Sets difficulty level with buttons
 */
 
 void setup() {
@@ -25,23 +34,56 @@ void setup() {
   gator = loadImage("gator.png");
   meatImg = loadImage("meat.png");
   bang = loadImage("bang.png");
+  powerUp = loadImage("arrow_up.png");
+  powerDown = loadImage("arrow_down.png");
   
   bgMusic = new SoundFile(this, "game_score.mp3");
   nomSound = new SoundFile(this, "nom_nom_sound.mp3");
   bgMusic.loop();
   bgMusic.amp(.05);
+
+  startButton = new Button(width/2, height/2 + 100, 100, 30, "Start", color(0, 0, 255));
+  quitButton = new Button(width/2, height/2 + 150, 100, 30, "End", color(255, 0, 0));
+  easyButton = new Button(width/2, height/2 + 70, 80, 30, "Easy", color(0, 0, 255));
+  notEasyButton = new Button(width/2, height/2 + 120, 80, 30, "Not Easy", color(255, 0, 0));
 }
 
 /*
-Key Pressed Function:
-- If the instruction screen is displayed, pressing any key will start the game
+Mouse Pressed Function:
+- If the instructions are displayed, player can choose to "start" or "quit" the game. 
 */
 
-void keyPressed() {
+void mousePressed() {
   if (instructionScreen) {
-    instructionScreen = false;
+    if (startButton.clicked()) {
+      println("Start button clicked");
+      instructionScreen = false;
+      gameStarted = true; 
+    }
+    if (quitButton.clicked()) {
+      exit();
+    }
+  } else if (gameStarted) { 
+    if (easyButton.clicked()) {
+      println("Easy mode selected");
+      startGame = true;
+      easyMode = true;
+      p1.speedMultiplier = 1;
+      
+    }
+    if (notEasyButton.clicked()) {
+      println("Not Easy mode selected");
+      startGame = true;
+      easyMode = false;
+       p1.speedMultiplier = 2.0;
+    }
+  } else {
+    if (gameOver) {
+      exit();
+    }
   }
 }
+
 
 /*
 Display Instructions Function:
@@ -54,11 +96,22 @@ void displayInstructions() {
   textAlign(CENTER);
   textSize(20);
   fill(255);
-  text("Instructions:", width / 2, height / 2 - 50);
-  text("- Use arrow keys to move the gator left and right", width / 2, height / 2);
-  text("- Catch the falling meats to increase your score", width / 2, height / 2 + 30);
-  text("- Avoid letting meats fall off the \nbottom of the screen", width / 2, height / 2 + 60);
-  text("- Press any key to begin", width / 2, height / 2 + 110);
+  text("Instructions:", width / 2, height / 2 - 75);
+  
+
+  println("boolean variable: " + gameStarted + " " + startGame + " " + easyMode);
+  if (instructionScreen) {
+    text("- Use arrow keys to move the gator left and right", width / 2, height / 2 - 40);
+    text("- Catch the falling meats to increase your score", width / 2, height / 2 - 15);
+    text("- Avoid letting meats fall off the \nbottom of the screen", width / 2, height / 2 + 10);
+    startButton.display();
+    quitButton.display();
+  }else if (gameStarted && !startGame) {
+    println("In game started, instructions screen");
+    text("Select a difficulty level:", width / 2, height / 2 - 40);
+    easyButton.display();
+    notEasyButton.display();
+  }
 }
 
 /*
@@ -68,9 +121,9 @@ Draw Function:
 */
 
 void draw() {
-  if (instructionScreen) {
+  if (instructionScreen || (gameStarted && !startGame)) {
     displayInstructions();
-  } else {
+  } else if (gameStarted && startGame) {
     background(255);
     image(background, 0, 0, 400, 400);
     p1.display();
@@ -96,11 +149,20 @@ void draw() {
         }
       }
       
+       if (millis() - lastPowerSpawnTime > powerInterval) {
+        if (spawnPowerUp) {
+          meats.add(new PowerUp());
+        } else {
+          meats.add(new PowerDown());
+        }
+        lastPowerSpawnTime = millis();
+        spawnPowerUp = !spawnPowerUp; // Toggle between powerUp and powerDown
+      }
+      
       if (frameCount % 50 == 0) { // Generate new meats at top of screen every 60 frames
         meats.add(new Food());
       }
-    } 
-    else { // Game Ends
+    } else { // Game Ends
       fill(255, 0, 0);
       textSize(40);
       textAlign(CENTER);
@@ -108,6 +170,42 @@ void draw() {
     }
   }
 }
+
+/*
+Button Class:
+- The button class contains the x and y position, width, height, label, and color of the button.
+- Display Function: Displays the button on the screen
+- Clicked Function: Checks if the button has been clicked
+*/
+
+class Button {
+  float x, y, w, h;
+  String label;
+  color c;
+
+  Button(float x, float y, float w, float h, String label, color c) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    this.label = label;
+    this.c = c;
+  }
+
+  void display() {
+    rectMode(CENTER);
+    fill(c);
+    rect(x, y, w, h);
+    textAlign(CENTER, CENTER);
+    fill(255);
+    text(label, x, y);
+  }
+
+  boolean clicked() {
+    return mouseX > x - w/2 && mouseX < x + w/2 && mouseY > y - h/2 && mouseY < y + h/2;
+  }
+}
+
 
 /*
 Player Class:
@@ -122,6 +220,11 @@ Player Class:
 class Player {
   int numLives;
   int xPos;
+  boolean powerUpActive = false;
+  int powerUpTimer = 0;
+  boolean powerDownActive = false;
+  int powerDownTimer = 0;
+  float speedMultiplier = 1; 
 
   Player(int numLives) {
     this.numLives = numLives;
@@ -129,14 +232,56 @@ class Player {
   }
 
   void movePlayer() {
-    if (keyPressed) {
-      if (key == CODED) {
-        if (keyCode == RIGHT) {
-          xPos += 3;
-          xPos = constrain(xPos, 0, width - 100);
-        } else if (keyCode == LEFT) {
-          xPos -= 3;
-          xPos = constrain(xPos, 0, width - 100);
+if (powerUpActive) {
+      // Double the speed
+      if (keyPressed) {
+        if (key == CODED) {
+          if (keyCode == RIGHT) {
+            xPos += 10; // Double the speed for right movement
+            xPos = constrain(xPos, 0, width - 100);
+          } else if (keyCode == LEFT) {
+            xPos -= 10; // Double the speed for left movement
+            xPos = constrain(xPos, 0, width - 100);
+          }
+        }
+      }
+      // Decrease the powerUp timer
+      powerUpTimer--;
+      // If powerUp timer reaches zero, deactivate powerUp
+      if (powerUpTimer <= 0) {
+        powerUpActive = false;
+      }
+    } 
+    else if(powerDownActive) {
+      if (keyPressed) {
+        if (key == CODED) {
+          if (keyCode == RIGHT) {
+            xPos += 1.5; // Double the speed for right movement
+            xPos = constrain(xPos, 0, width - 100);
+          } else if (keyCode == LEFT) {
+            xPos -= 1.5; // Double the speed for left movement
+            xPos = constrain(xPos, 0, width - 100);
+          }
+        }
+      }
+      // Decrease the powerUp timer
+      powerDownTimer--;
+      // If powerUp timer reaches zero, deactivate powerUp
+      if (powerDownTimer <= 0) {
+        powerDownActive = false;
+      }
+    }
+    else {
+      // Normal speed
+      if (keyPressed) {
+        if (key == CODED) {
+          if (keyCode == RIGHT) {
+            xPos += 6;
+            xPos = constrain(xPos, 0, width - 100);
+          } else if (keyCode == LEFT) {
+            xPos -= 6;
+            xPos = constrain(xPos, 0, width - 100);
+          }
         }
       }
     }
@@ -194,20 +339,56 @@ class Food {
   }
 
   void update() {
-    y += speed;
+    y += speed * p1.speedMultiplier;
   }
 
-  boolean checkCollision(Player p) {
-    if (x > p.xPos && x < p.xPos + 100 && y + 50 > height - 100) {
-      return true; // Collision detected
+boolean checkCollision(Player p) {
+  if (x > p.xPos && x < p.xPos + 100 && y + 50 > height - 100) {
+    if (this instanceof PowerUp) {
+      // Activate powerUp effect
+      p.powerUpActive = true;
+      p.powerUpTimer = 300; // 5 seconds (300 frames at 60 fps)
+      return true; // Collision detected, but no score increase for powerUp
+    } else if (this instanceof PowerDown) {
+      // Activate powerDown effect
+      p.powerDownActive = true;
+      p.powerDownTimer = 300; // 5 seconds (300 frames at 60 fps)
+      return true; // Collision detected, but no score or lives change for powerDown
+    } else {
+      return true; // Collision detected, increase score for other foods
     }
-    return false; // No collision
   }
+  return false; // No collision
+}
 
   boolean isOffscreen() {
     if (y > height) {
       return true;
     }
     return false; // Return true if meat is offscreen
+  }
+}
+
+class PowerUp extends Food {
+  PowerUp() {
+    super(); // Call the constructor of the superclass (Food)
+    x = random(width - 50); // Randomize x position
+    y = -50; // Start from the top of the screen
+    speed = 1.5; // Set the speed
+  }
+  void display() {
+    image(powerUp, x, y, 50, 50); // Display the powerUp image
+  }
+}
+
+class PowerDown extends Food {
+  PowerDown() {
+    super(); // Call the constructor of the superclass (Food)
+    x = random(width - 50); // Randomize x position
+    y = -50; // Start from the top of the screen
+    speed = 2; // Set the speed
+  }
+  void display() {
+    image(powerDown, x, y, 50, 50); // Display the powerDown image
   }
 }
