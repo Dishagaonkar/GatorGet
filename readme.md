@@ -3,7 +3,7 @@
 
 ## Setup
 
-After entering pde file, click on the sketh tab at the top.
+After entering pde file, click on the sketch tab at the top.
 Click on Import, then Manage Libraries.
 Search "Sound" and Install the Sound library provided by processing. 
 After this you may run the code.

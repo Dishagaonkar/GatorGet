@@ -6,10 +6,12 @@ Vector<Food> meats = new Vector<Food>();
 int score = 0;
 boolean gameOver = false;
 boolean instructionScreen = true;
+boolean instructions = false;
 
-PImage background, gator, meatImg, bang;
+PImage background, ground, gator, meatImg, bang;
+PFont title, normal;
 SoundFile bgMusic, nomSound;
-Button startButton, quitButton, easyButton, notEasyButton;
+Button startButton, quitButton, easyButton, notEasyButton, instButton;
 boolean gameStarted = false;
 boolean startGame = false;
 boolean easyMode = false;
@@ -27,9 +29,13 @@ void setup() {
   size(400, 400);
   p1 = new Player(3);
   background = loadImage("background.png");
+  ground = loadImage("grassGround.png");
   gator = loadImage("gator.png");
   meatImg = loadImage("meat.png");
   bang = loadImage("bang.png");
+
+  title = loadFont("Dubai-Bold-48.vlw");
+  normal = loadFont("LucidaSans-28.vlw");
   
   bgMusic = new SoundFile(this, "game_score.mp3");
   nomSound = new SoundFile(this, "nom_nom_sound.mp3");
@@ -40,6 +46,7 @@ void setup() {
   quitButton = new Button(width/2, height/2 + 150, 100, 30, "End", color(255, 0, 0));
   easyButton = new Button(width/2, height/2 + 70, 80, 30, "Easy", color(0, 0, 255));
   notEasyButton = new Button(width/2, height/2 + 120, 80, 30, "Not Easy", color(255, 0, 0));
+  instButton = new Button(width/2, height/2 + 50, 100, 30, "Instructions", color(#AA90FF));
 }
 
 /*
@@ -47,8 +54,28 @@ Mouse Pressed Function:
 - If the instructions are displayed, player can choose to "start" or "quit" the game. 
 */
 
+void displayInst()
+{
+  fill(#0B5A01);
+  text("- Use arrow keys to move the gator left and right", width / 2, height / 2 - 40);
+  text("- Catch the falling meats to increase your score", width / 2, height / 2 - 15);
+  text("- Avoid letting meats fall off the \nbottom of the screen", width / 2, height / 2 + 10);
+}
+
+void gameName()
+{
+  textFont(title);
+  fill(#094302);
+  text("CHOMP CHOMP", width/2, height/2 - 60);
+  textFont(normal, 15);
+}
+
 void mousePressed() {
   if (instructionScreen) {
+    if(instButton.clicked())
+    {
+      instructions = true;
+    }
     if (startButton.clicked()) {
       println("Start button clicked");
       instructionScreen = false;
@@ -81,6 +108,12 @@ Display Instructions Function:
 - Displays game play instructions on the screen
 */
 
+void startMenu()
+{
+  background(#B8E6E2);
+  image(ground, 0, 250, 400, 400);
+}
+
 void displayInstructions() {
   background(255);
   image(background, 0, 0, 400, 400);
@@ -92,9 +125,13 @@ void displayInstructions() {
 
   println("boolean variable: " + gameStarted + " " + startGame + " " + easyMode);
   if (instructionScreen) {
-    text("- Use arrow keys to move the gator left and right", width / 2, height / 2 - 40);
-    text("- Catch the falling meats to increase your score", width / 2, height / 2 - 15);
-    text("- Avoid letting meats fall off the \nbottom of the screen", width / 2, height / 2 + 10);
+    startMenu();
+    gameName();
+    if(instructions)
+    {
+      displayInst();
+    }
+    instButton.display();
     startButton.display();
     quitButton.display();
   }else if (gameStarted && !startGame) {
