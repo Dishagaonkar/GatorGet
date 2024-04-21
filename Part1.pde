@@ -8,13 +8,17 @@ boolean gameOver = false;
 boolean instructionScreen = true;
 boolean instructions = false;
 
-PImage background, ground, gator, meatImg, bang;
+PImage background, ground, gator, meatImg, bang, powerUp, powerDown;
 PFont title, normal;
 SoundFile bgMusic, nomSound;
 Button startButton, quitButton, easyButton, notEasyButton, instButton;
 boolean gameStarted = false;
 boolean startGame = false;
 boolean easyMode = false;
+
+int lastPowerSpawnTime = 0;
+int powerInterval = 10000;
+boolean spawnPowerUp = true;
 
 
 /*
@@ -36,6 +40,8 @@ void setup() {
 
   title = loadFont("Dubai-Bold-48.vlw");
   normal = loadFont("LucidaSans-28.vlw");
+  powerUp = loadImage("arrow_up.png");
+  powerDown = loadImage("arrow_down.png");
   
   bgMusic = new SoundFile(this, "game_score.mp3");
   nomSound = new SoundFile(this, "nom_nom_sound.mp3");
@@ -89,11 +95,14 @@ void mousePressed() {
       println("Easy mode selected");
       startGame = true;
       easyMode = true;
+      p1.speedMultiplier = 1;
+      
     }
     if (notEasyButton.clicked()) {
       println("Not Easy mode selected");
       startGame = true;
       easyMode = false;
+       p1.speedMultiplier = 2.0;
     }
   } else {
     if (gameOver) {
@@ -177,6 +186,16 @@ void draw() {
         }
       }
       
+       if (millis() - lastPowerSpawnTime > powerInterval) {
+        if (spawnPowerUp) {
+          meats.add(new PowerUp());
+        } else {
+          meats.add(new PowerDown());
+        }
+        lastPowerSpawnTime = millis();
+        spawnPowerUp = !spawnPowerUp; // Toggle between powerUp and powerDown
+      }
+      
       if (frameCount % 50 == 0) { // Generate new meats at top of screen every 60 frames
         meats.add(new Food());
       }
@@ -238,6 +257,11 @@ Player Class:
 class Player {
   int numLives;
   int xPos;
+  boolean powerUpActive = false;
+  int powerUpTimer = 0;
+  boolean powerDownActive = false;
+  int powerDownTimer = 0;
+  float speedMultiplier = 1; 
 
   Player(int numLives) {
     this.numLives = numLives;
@@ -245,14 +269,56 @@ class Player {
   }
 
   void movePlayer() {
-    if (keyPressed) {
-      if (key == CODED) {
-        if (keyCode == RIGHT) {
-          xPos += 3;
-          xPos = constrain(xPos, 0, width - 100);
-        } else if (keyCode == LEFT) {
-          xPos -= 3;
-          xPos = constrain(xPos, 0, width - 100);
+if (powerUpActive) {
+      // Double the speed
+      if (keyPressed) {
+        if (key == CODED) {
+          if (keyCode == RIGHT) {
+            xPos += 10; // Double the speed for right movement
+            xPos = constrain(xPos, 0, width - 100);
+          } else if (keyCode == LEFT) {
+            xPos -= 10; // Double the speed for left movement
+            xPos = constrain(xPos, 0, width - 100);
+          }
+        }
+      }
+      // Decrease the powerUp timer
+      powerUpTimer--;
+      // If powerUp timer reaches zero, deactivate powerUp
+      if (powerUpTimer <= 0) {
+        powerUpActive = false;
+      }
+    } 
+    else if(powerDownActive) {
+      if (keyPressed) {
+        if (key == CODED) {
+          if (keyCode == RIGHT) {
+            xPos += 1.5; // Double the speed for right movement
+            xPos = constrain(xPos, 0, width - 100);
+          } else if (keyCode == LEFT) {
+            xPos -= 1.5; // Double the speed for left movement
+            xPos = constrain(xPos, 0, width - 100);
+          }
+        }
+      }
+      // Decrease the powerUp timer
+      powerDownTimer--;
+      // If powerUp timer reaches zero, deactivate powerUp
+      if (powerDownTimer <= 0) {
+        powerDownActive = false;
+      }
+    }
+    else {
+      // Normal speed
+      if (keyPressed) {
+        if (key == CODED) {
+          if (keyCode == RIGHT) {
+            xPos += 6;
+            xPos = constrain(xPos, 0, width - 100);
+          } else if (keyCode == LEFT) {
+            xPos -= 6;
+            xPos = constrain(xPos, 0, width - 100);
+          }
         }
       }
     }
@@ -310,20 +376,56 @@ class Food {
   }
 
   void update() {
-    y += speed;
+    y += speed * p1.speedMultiplier;
   }
 
-  boolean checkCollision(Player p) {
-    if (x > p.xPos && x < p.xPos + 100 && y + 50 > height - 100) {
-      return true; // Collision detected
+boolean checkCollision(Player p) {
+  if (x > p.xPos && x < p.xPos + 100 && y + 50 > height - 100) {
+    if (this instanceof PowerUp) {
+      // Activate powerUp effect
+      p.powerUpActive = true;
+      p.powerUpTimer = 300; // 5 seconds (300 frames at 60 fps)
+      return true; // Collision detected, but no score increase for powerUp
+    } else if (this instanceof PowerDown) {
+      // Activate powerDown effect
+      p.powerDownActive = true;
+      p.powerDownTimer = 300; // 5 seconds (300 frames at 60 fps)
+      return true; // Collision detected, but no score or lives change for powerDown
+    } else {
+      return true; // Collision detected, increase score for other foods
     }
-    return false; // No collision
   }
+  return false; // No collision
+}
 
   boolean isOffscreen() {
     if (y > height) {
       return true;
     }
     return false; // Return true if meat is offscreen
+  }
+}
+
+class PowerUp extends Food {
+  PowerUp() {
+    super(); // Call the constructor of the superclass (Food)
+    x = random(width - 50); // Randomize x position
+    y = -50; // Start from the top of the screen
+    speed = 1.5; // Set the speed
+  }
+  void display() {
+    image(powerUp, x, y, 50, 50); // Display the powerUp image
+  }
+}
+
+class PowerDown extends Food {
+  PowerDown() {
+    super(); // Call the constructor of the superclass (Food)
+    x = random(width - 50); // Randomize x position
+    y = -50; // Start from the top of the screen
+    speed = 2; // Set the speed
+  }
+  void display() {
+    image(powerDown, x, y, 50, 50); // Display the powerDown image
   }
 }
