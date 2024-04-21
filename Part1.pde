@@ -262,8 +262,8 @@ class Player {
     if (!instructionScreen) {
       fill(255);
       textSize(20);
-      text("Score: " + score, 40, 20);  
-      text("Number of lives: " + numLives, 80, 50);  
+      text("Score: " + score, 45, 20);  
+      text("Number of lives: " + numLives, 90, 55);  
     }
   }
 
